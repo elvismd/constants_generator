@@ -11,7 +11,7 @@ public class ConstantsGenerator : Editor
 {
     static string ConstantsFileName = "ConstantsReference";
 
-    [MenuItem("Tools/Generate Constants")]
+    [MenuItem("Constants Generator/Generate Constants")]
     static void GenerateConstants()
     {
         string FileContents = "using System;\nusing System.Collections;\nusing UnityEngine;\nusing UnityEngine.SceneManagement;\n\n";
@@ -155,5 +155,81 @@ public class ConstantsGenerator : Editor
         FileContents += "\t}\n\n";
 
         return FileContents;
+    }
+}
+
+public class ConstantsWindow : EditorWindow
+{
+    [MenuItem("Constants Generator/Constants Table")]
+    public static void ShowWindow()
+    {
+        var window = EditorWindow.GetWindow(typeof(ConstantsWindow));
+        var titleContent = window.titleContent;
+        titleContent.text = "Constants Table";
+    }
+
+    List<Object> folderObjects = new List<Object>();
+
+    private void OnGUI()
+    {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Folders references used to generate Prefabs Constants, the folders dragged here may contains prefabs", EditorStyles.wordWrappedLabel);
+
+        EditorGUILayout.Space();
+        DropAreaGUI();
+
+        EditorGUILayout.Space();
+        EditorGUILayout.Space();
+
+        for (int i = 0; i < folderObjects.Count; i++)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.ObjectField((i + 1).ToString(), folderObjects[i], typeof(DefaultAsset), false);
+            EditorGUI.EndDisabledGroup();
+
+            if (GUILayout.Button("-", GUILayout.Width(20)))
+            {
+                folderObjects.RemoveAt(i);
+                break;
+            }
+
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    public void DropAreaGUI()
+    {
+        Event evt = Event.current;
+        Rect drop_area = GUILayoutUtility.GetRect(0.0f, 50.0f, GUILayout.ExpandWidth(true));
+
+        GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
+        boxStyle.normal.textColor = Color.white;
+        GUI.Box(drop_area, "Drag and drop folders here", boxStyle);
+
+        switch (evt.type)
+        {
+            case EventType.DragUpdated:
+            case EventType.DragPerform:
+                if (!drop_area.Contains(evt.mousePosition))
+                    return;
+
+                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+                if (evt.type == EventType.DragPerform)
+                {
+                    DragAndDrop.AcceptDrag();
+
+                    foreach (Object dragged_object in DragAndDrop.objectReferences)
+                    {
+                        // Do On Drag Stuff here
+                        folderObjects.Add(dragged_object);
+                    }
+
+                    evt.Use();
+                }
+            break;
+        }
     }
 }
